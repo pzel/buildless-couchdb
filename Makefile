@@ -1,6 +1,6 @@
 .PHONY: serve stop watch build test see lint
 
-serve:
+serve:	build
 	(cd public && ../serve1355 >../serve1355.log 2>&1) &
 
 stop:
