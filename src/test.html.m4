@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <script src="https://unpkg.com/@testing-library/dom@10.4.1/dist/@testing-library/dom.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dequal@2.0.3/dist/index.min.js "></script>
-    <script src="https://cdn.jsdelivr.net/npm/pouchdb@9.0.0/dist/pouchdb.min.js"></script>
+    <script src="/pouchdb.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/mocha/mocha.css">
     <script type="importmap">m4_include(`importmap-test.json')</script>
   </head>

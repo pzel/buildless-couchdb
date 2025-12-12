@@ -1,5 +1,12 @@
 import { expect } from "chai";
 import { App, mkApp } from "./app.js";
+import { render } from "preact";
+
+mocha.setup({ui: "bdd",
+             slow: /* ms */ "200",
+             timeout: '2000',
+             checkLeaks: "true"
+            });
 
 // This library (like Mocha) is magically imported in the test index
 const tl = globalThis.TestingLibraryDom
@@ -9,90 +16,87 @@ const qar = tl.queryAllByRole;
 const until = (f) => tl.waitFor(f, {interval: 10});
 
 // clear all pouches
-const dbs = await window.indexedDB.databases()
-dbs.forEach(db => { 
-  if (db.name.startsWith("_pouch"))
-    window.indexedDB.deleteDatabase(db.name)
+const clearDbs = async () => {
+  const dbs = await window.indexedDB.databases()
+  dbs.forEach(db => {
+    if (db.name.startsWith("_pouch"))
+      window.indexedDB.deleteDatabase(db.name)
   });
-
+}
+await clearDbs();
 let __nextId = 2;
 
 const newUserId = () =>  {
-//  window.indexedDB.deleteDatabase(db.name)
-  const x = `user${__nextId++}`
-  console.log("new user id", x, __nextId)
-  return x
+  return `user${__nextId++}`
 }
 
-describe("Sanity check", () => {
-  it("App is loadable", () => {
-    expect(App).to.not.be.undefined;
-  });
+/* In order to cleanly destroy (unmount) the Preact Component,
+   we need to keep it in a global variable */
+let APP = null;
 
-  it("testing library dom is available", () => {
-    expect(tl).to.not.be.undefined;
-  });
-});
+const setupEach = (kont) => {
+  APP = mkApp(newUserId(), document.createElement('div'));
+  kont();
+}
+
+const teardownEach = (kont) => {
+  if (APP) {
+    render(null, APP);
+    APP = null;
+  }
+  kont();
+}
 
 describe("Incrementing the current counter", () => {
-  it("the starting value is 0", () => {
-    const div = document.createElement('div');
-    mkApp(newUserId(), div);
+  beforeEach(setupEach);
+  afterEach(teardownEach);
 
-    expect(qid(div, "counter").innerText).to.be.equal("0");
+  it("the starting value is 0", () => {
+    expect(qid(APP, "counter").innerText).to.be.equal("0");
   });
 
   it("can be incremented", async () => {
-    const div = document.createElement('div');
-    mkApp(newUserId(), div);
-
-    txt(div, 'Increment').click()
-    await until(() => expect(qid(div, "counter").innerText).to.be.equal("1"));
+    txt(APP, 'Increment').click()
+    await until(() => expect(qid(APP, "counter").innerText).to.be.equal("1"));
   });
 
   it("can be decremented too", async () => {
-    const div = document.createElement('div');
-    mkApp(newUserId(), div);
+    txt(APP, 'Increment').click();
+    await until(() => expect(qid(APP, "counter").innerText).to.be.equal("1"));
 
-    txt(div, 'Increment').click();
-    await until(() => expect(qid(div, "counter").innerText).to.be.equal("1"));
-
-
-    txt(div, 'Decrement').click();
-    await until(() => expect(qid(div, "counter").innerText).to.be.equal("0"));
+    txt(APP, 'Decrement').click();
+    await until(() => expect(qid(APP, "counter").innerText).to.be.equal("0"));
   });
 
 });
 
 describe("Persisting counter values", () => {
+  beforeEach(setupEach);
+  afterEach(teardownEach);
+
   it("can be done after incrementing", async () => {
-    const div = document.createElement('div');
-    mkApp(newUserId(), div);
+    txt(APP, 'Increment').click()
+    await until(() => expect(qid(APP, "counter").innerText).to.be.equal("1"));
 
-    txt(div, 'Increment').click()
-    await until(() => expect(qid(div, "counter").innerText).to.be.equal("1"));
-
-    txt(div, 'Save this counter').click()
-    await until(() => expect(qid(div, "counter-list").innerText).to.be.equal("1"));
+    txt(APP, 'Save this counter').click()
+    await until(() => expect(qid(APP, "counter-list").innerText).to.be.equal("1"));
   });
 
   it("new counter is started after saving the previous one", async () => {
-    const div = document.createElement('div');
-    mkApp(newUserId(), div);
+    txt(APP, 'Increment').click()
+    await until(() => expect(qid(APP, "counter").innerText).to.be.equal("1"));
 
-    txt(div, 'Increment').click()
-    await until(() => expect(qid(div, "counter").innerText).to.be.equal("1"));
+    txt(APP, 'Save this counter').click()
+    await until(() => expect(qid(APP, "counter").innerText).to.be.equal("0"));
 
-    txt(div, 'Save this counter').click()
-    await until(() => expect(qid(div, "counter").innerText).to.be.equal("0"));
+    txt(APP, 'Decrement').click()
+    await until(() => expect(qid(APP, "counter").innerText).to.be.equal("-1"))
 
-    txt(div, 'Decrement').click()
-    await until(() => expect(qid(div, "counter").innerText).to.be.equal("-1"))
-
-    txt(div, 'Save this counter').click()
+    txt(APP, 'Save this counter').click()
     await until(() =>
-      expect(qar(div, "counter-list-item")
+      expect(qar(APP, "counter-list-item")
              .map((i) => i.innerText))
              .to.have.ordered.members(["-1", "1"]))
   });
 });
+

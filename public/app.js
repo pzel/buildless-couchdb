@@ -39,10 +39,22 @@ export class App extends Component {
     console.log("App starting with ", userId, dbName)
     const db = new PouchDB(dbName);
     super();
-    this.state = {count: 0, db: db }
+
     const opts = {live: true, retry: true};
-    const remoteCouch = `http://${userId}:${userId}-password@localhost:15984/${dbName}`;
-    db.replicate.to(remoteCouch, opts, function (res) { console.log("REMOTE DB", res); });
+    const remote = new PouchDB(`http://${userId}:${userId}-password@localhost:15984/${dbName}`,{
+      fetch: async(url, opts ) => {
+        /* If you need to adjust how things are sent to CounchDB, here's where you can override
+           the fetch calls */
+        return await PouchDB.fetch(url, opts)
+      }});
+    this.state = {count: 0, db: db, remote: remote}
+    db.replicate.to(remote, opts, function (res) { console.log({"REMOTE DB TO": res})});
+    db.replicate.from(remote, opts, function (res) { console.log({"REMOTE DB FROM": res})});
+  }
+
+  componentWillUnmount = async () => {
+    await this.state.remote.close();
+    await this.state.db.close();
   }
 
   incr = () => {this.setState({count: this.state.count + 1});}
@@ -72,5 +84,6 @@ export class App extends Component {
 }
 
 export function mkApp(userId, element) {
-  return render(html`<${App} userId=${userId}/>`, element);
+  render(html`<${App} userId=${userId}/>`, element);
+  return element;
 }
