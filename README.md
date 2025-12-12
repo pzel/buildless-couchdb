@@ -16,7 +16,7 @@ original project for rationale and goals.
 
 ## What's changed versus buildless?
 
-### 1) There is an instance of [CouchDB]https://couchdb.apache.org/) running
+### 1) There is an instance of [CouchDB](https://couchdb.apache.org/) running
 locally, and the app's PouchDB is set up to replicate to CouchDB.
 
 CouchDB uses the [per-user
