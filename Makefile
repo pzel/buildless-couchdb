@@ -4,6 +4,9 @@ DATA_VOLUME=buildless-couchdb-data
 serve:	build serve-couchdb
 	(cd public && ../bin/serve1355 >../serve1355.log 2>&1) &
 
+setup:
+	./bin/addUsers
+
 serve-couchdb:
 	-docker stop buildless-couchdb
 	docker build . --file=./couchdb.dockerfile -t buildless-couchdb:latest &&\
@@ -17,7 +20,6 @@ serve-couchdb:
 stop:
 	-docker stop buildless-couchdb
 	pkill -fec 'serve1355'
-
 
 watch:
 	watchexec --watch=./ --watch=./public --exts=js,json,m4 $(MAKE) build
