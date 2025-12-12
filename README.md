@@ -16,8 +16,7 @@ original project for rationale and goals.
 
 ## What's changed versus buildless?
 
-### 1) There is an instance of [CouchDB](https://couchdb.apache.org/) running
-locally, and the app's PouchDB is set up to replicate to CouchDB.
+### There is an instance of [CouchDB](https://couchdb.apache.org/) running locally, and the app's PouchDB is set up to replicate to CouchDB.
 
 CouchDB uses the [per-user
 database](https://docs.couchdb.org/en/stable/config/couch-peruser.html) scheme,
@@ -32,7 +31,7 @@ and passwords are generated sequentially:
 | user<N>  | user<N>-password |
 
 
-### 2) The Preact component (the App) knows how to shut down cleanly
+### The Preact component (the App) knows how to shut down cleanly
 
 The web browser can only keep so many concurrent connections open to the same
 host, and running the test suite creates a bunch of `App` instances, each of
